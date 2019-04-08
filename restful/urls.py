@@ -24,7 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('snippets.urls')),
     path('schema/', schema_view),
-    path('', include('usermanage.urls'))
+    path('', include('usermanage.urls')),
 ]
 urlpatterns += [
     path('api-auth/', include('rest_framework.urls')),
