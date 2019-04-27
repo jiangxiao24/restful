@@ -3,11 +3,14 @@ from django.shortcuts import render
 # Create your views here.
 
 from snippets.models import Snippet
+from django.contrib.auth.models import User
 from snippets.serializers import SnippetSerializer
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
+import json
+from django.shortcuts import render,HttpResponse,redirect
 
 
 def index(request):
@@ -22,13 +25,13 @@ def index(request):
     }
     serializer = SnippetSerializer(snippet, context=serializer_context)
     print('#######################')
-    #print(type(serializer.data))
-    #print(serializer.data)
+    print(type(serializer.data))
+    print(serializer.data)
     """
     <class 'rest_framework.utils.serializer_helpers.ReturnDict'>
     {'id': 34, 'title': '', 'code': 'foo = "bar"\n', 'linenos': False, 'language': 'python', 'style': 'friendly'}
     """
-    content = JSONRenderer().render(serializer.data)
+    content = JSONRenderer().render(serializer.data) #把字典类型转化为字节流
     print('#######################')
     print(type(content))
     print(content)
@@ -38,7 +41,7 @@ def index(request):
     """
     import io
     stream = io.BytesIO(content)
-    data = JSONParser().parse(stream)
+    data = JSONParser().parse(stream) #把字节流转换为字典类型
     print('#######################')
     print(type(data))
     print(data)
@@ -50,31 +53,39 @@ def index(request):
         'request': request,
     }
     serializer2=SnippetSerializer(data=data,context=serializer_context2)
-    serializer2.is_valid()
-    #serializer2.save()
-    serializer3=SnippetSerializer(Snippet.objects.all(),many=True)
+    if serializer2.is_valid():
+        serializer2.save()
+    serializer3=SnippetSerializer(Snippet.objects.all(), many=True)
     print('#######################')
-    #print(type(serializer3)) #<class 'rest_framework.serializers.ListSerializer'>
+    print(type(serializer3)) #<class 'rest_framework.serializers.ListSerializer'> 列出所有的值
+    print(serializer3.data)
+    #Snippet.objects.all().delete()
     return render(request, 'index.html')
 
 
-# @csrf_exempt
+# @csrf_exempt #不需要做csfr校验
 # def snippet_list(request):
 #     """
 #     List all code snippets, or create a new snippet.
 #     """
-#     if request.method == 'GET':
-#         snippets = Snippet.objects.all()
-#         serializer = SnippetSerializer(snippets, many=True)
-#         return JsonResponse(serializer.data, safe=False)
+#     # if request.method == 'GET':
+#     #     snippets = Snippet.objects.all()
+#     #     serializer = SnippetSerializer(snippets, many=True)
+#     #     #return JsonResponse(serializer.data, safe=False)
+#     #     return render(request, 'snippets_list.html')
 #
-#     elif request.method == 'POST':
-#         data = JSONParser().parse(request)
-#         serializer = SnippetSerializer(data=data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return JsonResponse(serializer.data, status=201)
-#         return JsonResponse(serializer.errors, status=400)
+#     # elif request.method == 'POST':
+#     #     data = JSONParser().parse(request)
+#     #     serializer = SnippetSerializer(data=data)
+#     #     if serializer.is_valid():
+#     #         serializer.save()
+#     #         return JsonResponse(serializer.data, status=201)
+#     #     return JsonResponse(serializer.errors, status=400)
+#     if request.method == 'POST':
+#         title = request.POST.get('title', None)
+#         code = request.POST.get('code', None)
+#         return redirect('/index/')
+#     return render(request, 'snippets_list.html')
 
 
 # @csrf_exempt
@@ -146,52 +157,72 @@ def index(request):
 #         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# from snippets.models import Snippet
-# from snippets.serializers import SnippetSerializer
-# from django.http import Http404
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from rest_framework import status
-#
-#
-# class Snippets_list(APIView):
-#     def get(self, request, format=None):
-#         snippet = Snippet.objects.all()
-#         serializer = SnippetSerializer(snippet, many=True)
-#         return Response(serializer.data)
-#
-#     def post(self, request, fromat=None):
-#         serializer = SnippetSerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#
-#
-# class Snippet_detail(APIView):
-#
-#     def get_obj(self, pk):
-#         try:
-#             return Snippet.objects.get(pk=pk)
-#         except Snippet.DoesNotExist:
-#             return Http404
-#
-#     def get(self,request, pk, format=None):
-#         snippet = self.get_obj(pk=pk)
-#         serializer = SnippetSerializer(snippet)
-#         return Response(serializer.data)
-#
-#     def put(self, request, pk, format=None):
-#         serializer = SnippetSerializer(self.get_obj(pk=pk), data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#
-#     def delete(self, request, pk, format=None):
-#         snippet = self.get_obj(pk=pk)
-#         snippet.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
+from snippets.models import Snippet
+from snippets.serializers import SnippetSerializer
+from django.http import Http404
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import json
+from collections import OrderedDict
+
+
+# class JsonCustomEncoder(json.JSONEncoder):
+#     def default(self, field):
+#         if isinstance(field, OrderedDict):
+#             return {'code': field.code, 'messgae': field.message}
+#         else:
+#             return json.JSONEncoder.default(self, field)
+
+
+class Snippets_list(APIView):
+    def get(self, request, format=None):
+        snippet = Snippet.objects.all()
+        serializer = SnippetSerializer(snippet, many=True)
+        # d =serializer.data
+        # print(type(d)) #'rest_framework.utils.serializer_helpers.ReturnList'
+        # import json
+        # obj = d[0]
+        # print(type(json.dumps(obj, cls=JsonCustomEncoder)))
+        # obj1 = json.dumps(obj, cls=JsonCustomEncoder)
+        #return  render(request, 'snippets_list.html',{'obj':obj1})
+        #return HttpResponse(obj1)
+        return Response(serializer.data)
+
+    def post(self, request, fromat=None):
+        serializer = SnippetSerializer(data=request.data)
+        print(serializer.is_valid())
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class Snippet_detail(APIView):
+    def get_obj(self, pk):
+        try:
+            return Snippet.objects.get(pk=pk)
+        except Snippet.DoesNotExist:
+            return Http404
+
+    def get(self,request, pk, format=None):
+        snippet = self.get_obj(pk=pk)
+        serializer = SnippetSerializer(snippet)
+        return Response(serializer.data)
+
+    def put(self, request, pk, format=None):
+        serializer = SnippetSerializer(self.get_obj(pk=pk), data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk, format=None):
+        snippet = self.get_obj(pk=pk)
+        snippet.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 
 
 # from snippets.models import Snippet
@@ -276,14 +307,14 @@ from rest_framework.reverse import reverse
 # from rest_framework.response import Response
 #
 #
-@api_view(['GET'])
-def api_root(request, format=None):
-    return Response(
-        {
-            'users': reverse('user-list', request=request, format=format),
-            'snippets': reverse('snippet-list', request=request, format=format)
-        }
-    )
+# @api_view(['GET'])
+# def api_root(request, format=None):
+#     return Response(
+#         {
+#             'users': reverse('user-list', request=request, format=format),
+#             'snippets': reverse('snippet-list', request=request, format=format)
+#         }
+#     )
 #
 #
 # class SnippetHighlight(generics.GenericAPIView):
@@ -294,33 +325,33 @@ def api_root(request, format=None):
 #         snippet = self.get_object()
 #         return Response(snippet.highlighted)
 
-from rest_framework import viewsets
-from snippets.models import Snippet
-from django.contrib.auth.models import User
-from snippets.serializers import SnippetSerializer,UserSerializer
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework import permissions,renderers
-from snippets.permissions import IsOwnerOrReadOnly
-
-
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-
-class SnippetViewSet(viewsets.ModelViewSet):
-    queryset = Snippet.objects.all()
-    serializer_class = SnippetSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,)
-
-    @action(detail=True, renderer_classes=[renderers.StaticHTMLRenderer])
-    def highlight(self, request, *args, **kwargs):
-        snippet = self.get_object()
-        return Response(snippet.highlighted)
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+# from rest_framework import viewsets
+# from snippets.models import Snippet
+# from django.contrib.auth.models import User
+# from snippets.serializers import SnippetSerializer,UserSerializer
+# from rest_framework.decorators import action
+# from rest_framework.response import Response
+# from rest_framework import permissions,renderers
+# from snippets.permissions import IsOwnerOrReadOnly
+#
+#
+# class UserViewSet(viewsets.ReadOnlyModelViewSet):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#
+#
+# class SnippetViewSet(viewsets.ModelViewSet):
+#     queryset = Snippet.objects.all()
+#     serializer_class = SnippetSerializer
+#     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,)
+#
+#     @action(detail=True, renderer_classes=[renderers.StaticHTMLRenderer])
+#     def highlight(self, request, *args, **kwargs):
+#         snippet = self.get_object()
+#         return Response(snippet.highlighted)
+#
+#     def perform_create(self, serializer):
+#         serializer.save(owner=self.request.user)
 
 
 from restful.tasks import add
