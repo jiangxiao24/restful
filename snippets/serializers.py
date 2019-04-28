@@ -29,7 +29,9 @@ from django.contrib.auth.models import User
 #         return instance
 
 class SnippetSerializer(serializers.ModelSerializer):
-    #owner = serializers.ReadOnlyField(source='owner.username')
+    #这里表示序列化输入，即前端传入的数据。反序列化数据就不能传出去，即不能保存该数据,对于post起作用，put不起作用
+    owner = serializers.ReadOnlyField(source='owner.username')
+
     class Meta:
         model = Snippet
         fields = ( 'id', 'title', 'code', 'linenos', 'language', 'style', 'owner')
