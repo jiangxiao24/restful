@@ -28,34 +28,36 @@ from django.contrib.auth.models import User
 #         instance.save()
 #         return instance
 
-class SnippetSerializer(serializers.ModelSerializer):
-    #这里表示序列化输入，即前端传入的数据。反序列化数据就不能传出去，即不能保存该数据,对于post起作用，put不起作用
-    owner = serializers.ReadOnlyField(source='owner.username')
-
-    class Meta:
-        model = Snippet
-        fields = ( 'id', 'title', 'code', 'linenos', 'language', 'style', 'owner')
-
-
-class UserSerializer(serializers.ModelSerializer):
-    snippets = serializers.PrimaryKeyRelatedField(many=True, queryset=Snippet.objects.all())
-
-    class Meta:
-        model = User
-        fields = ('id', 'username', 'snippets')
-
-# class SnippetSerializer(serializers.HyperlinkedModelSerializer):
+# class SnippetSerializer(serializers.ModelSerializer):
+#     #这里表示序列化输入，即前端传入的数据。反序列化数据就不能传出去，即不能保存该数据,对于post起作用，put不起作用
 #     owner = serializers.ReadOnlyField(source='owner.username')
-#     highlighted = serializers.HyperlinkedIdentityField(view_name='snippet-highlight', format='html')
 #
 #     class Meta:
 #         model = Snippet
-#         fields = ('url', 'id', 'title', 'code', 'linenos', 'language', 'style', 'owner', 'highlighted')
+#         fields = ( 'id', 'title', 'code', 'linenos', 'language', 'style', 'owner')
 #
-
-# class UserSerializer(serializers.HyperlinkedModelSerializer):
-#     snippets = serializers.HyperlinkedRelatedField(many=True, view_name='snippet-detail', read_only=True)
+#
+# class UserSerializer(serializers.ModelSerializer):
+#     snippets = serializers.PrimaryKeyRelatedField(many=True, queryset=Snippet.objects.all())
 #
 #     class Meta:
 #         model = User
-#         fields = ('url', 'id', 'username', 'snippets')
+#         fields = ('id', 'username', 'snippets')
+
+
+class SnippetSerializer(serializers.HyperlinkedModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+    highlight = serializers.HyperlinkedIdentityField(view_name='snippet-highlight',format='html')
+
+    #默认自带了本身的url地址 "http://127.0.0.1:8000/snippets/28/"
+    class Meta:
+        model = Snippet
+        fields = ('url', 'title', 'code', 'linenos', 'language', 'style', 'owner', 'highlight')
+
+
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    snippets = serializers.HyperlinkedIdentityField(many=True, view_name ='snippet-detail', read_only=True)
+
+    class Meta:
+        model = User
+        fields = ('url', 'id', 'username', 'snippets')

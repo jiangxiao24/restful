@@ -118,46 +118,46 @@ def index(request):
 #         return HttpResponse(status=204)
 
 
-# from rest_framework import status
-# from rest_framework.decorators import api_view
-# from rest_framework.response import Response
-# from snippets.models import Snippet
-# from snippets.serializers import SnippetSerializer,UserSerializer
-#
-#
-# @api_view(['GET','POST'])
-# def user_list(request, format=None):
-#     if request.method == 'GET':
-#         user = User.objects.all()
-#         print(user)
-#         serializer = UserSerializer(user, many=True)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-#     elif request.method == 'POST':
-#         serializer = UserSerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-#
-#
-# @api_view(['GET', 'PUT', 'DELETE'])
-# def user_detail(request, pk, format=None):
-#     try:
-#         user = User.objects.get(pk=pk)
-#     except User.DoesNotExist:
-#         return Response(status=status.HTTP_400_BAD_REQUEST)
-#
-#     if request.method == 'GET':
-#         serilaizer = UserSerializer(user)
-#         return Response(serilaizer.data, status=status.HTTP_200_OK)
-#     elif request.method == 'PUT':
-#         serilaizer = UserSerializer(user, data=request.data)
-#         if serilaizer.is_valid():
-#             serilaizer.save()
-#         return Response(serilaizer.data, status=status.HTTP_200_OK)
-#     elif request.method == 'DELETE':
-#         user.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from snippets.models import Snippet
+from snippets.serializers import SnippetSerializer,UserSerializer
+
+
+@api_view(['GET','POST'])
+def user_list(request, format=None):
+    if request.method == 'GET':
+        user = User.objects.all()
+        print(user)
+        serializer = UserSerializer(user, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    elif request.method == 'POST':
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def user_detail(request, pk, format=None):
+    try:
+        user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    if request.method == 'GET':
+        serilaizer = UserSerializer(user)
+        return Response(serilaizer.data, status=status.HTTP_200_OK)
+    elif request.method == 'PUT':
+        serilaizer = UserSerializer(user, data=request.data)
+        if serilaizer.is_valid():
+            serilaizer.save()
+        return Response(serilaizer.data, status=status.HTTP_200_OK)
+    elif request.method == 'DELETE':
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 #
 #
 # @api_view(['GET', 'POST'])
@@ -420,27 +420,27 @@ class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
 
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
-# from rest_framework import renderers, generics
-# from rest_framework.response import Response
-#
-#
-# @api_view(['GET'])
-# def api_root(request, format=None):
-#     return Response(
-#         {
-#             'users': reverse('user-list', request=request, format=format),
-#             'snippets': reverse('snippet-list', request=request, format=format)
-#         }
-#     )
-#
-#
-# class SnippetHighlight(generics.GenericAPIView):
-#     queryset = Snippet.objects.all()
-#     renderer_classes = (renderers.StaticHTMLRenderer,)
-#
-#     def get(self, request, *args, **kwargs):
-#         snippet = self.get_object()
-#         return Response(snippet.highlighted)
+from rest_framework import renderers, generics
+from rest_framework.response import Response
+
+
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response(
+        {
+            'user': reverse('user-list', request=request, format=format),
+            'snippets': reverse('snippet-list', request=request, format=format) #reverse里面的名字是url中的命名空间
+        }
+    )
+
+
+class SnippetHighlight(generics.GenericAPIView):
+    queryset = Snippet.objects.all()
+    renderer_classes = (renderers.StaticHTMLRenderer,)
+
+    def get(self, request, *args, **kwargs):
+        snippet = self.get_object()
+        return Response(snippet.highlighted)
 
 # from rest_framework import viewsets
 # from snippets.models import Snippet
