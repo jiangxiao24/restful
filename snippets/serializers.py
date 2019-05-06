@@ -52,7 +52,7 @@ class SnippetSerializer(serializers.HyperlinkedModelSerializer):
     #默认自带了本身的url地址 "http://127.0.0.1:8000/snippets/28/"
     class Meta:
         model = Snippet
-        fields = ('url', 'title', 'code', 'linenos', 'language', 'style', 'owner', 'highlight')
+        fields = ('url','id', 'title', 'code', 'linenos', 'language', 'style', 'owner', 'highlight')
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):

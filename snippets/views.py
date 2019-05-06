@@ -372,103 +372,117 @@ def user_detail(request, pk, format=None):
 #     def delete(self, request, *args, **kwargs):
 #         return self.destroy(request, *args, **kwargs)
 
-from snippets.models import Snippet
-from snippets.serializers import SnippetSerializer,UserSerializer
-from rest_framework import generics
-from django.contrib.auth.models import User
-from snippets.permissions import IsOwnerOrReadOnly
-from rest_framework import permissions
-
-
-class UserList(generics.ListCreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-
-class UserDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-
-class SnippetList(generics.ListCreateAPIView):
-    queryset = Snippet.objects.all()
-    serializer_class = SnippetSerializer
-
-    #这里表示在snippet中的用户是登录的用户而不是传入的请求用户
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
-
-    #IsAuthenticatedOrReadOnly:设置只用经过身份认证的用户(登陆)可以进行读写，否则执行访问get方法
-    #IsOwnerOrReadOnly:自定义的IsOwnerOrReadOnly表示只用创建的用户才能够进行修改
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,)
-
-
-class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Snippet.objects.all()
-    serializer_class = SnippetSerializer
-
-    #这里表示在snippet中修改后的用户是登录的用户而不是传入的请求用户
-    def perform_update(self, serializer):
-        serializer.save(owner=self.request.user)
-
-    # IsAuthenticatedOrReadOnly:设置只用经过身份认证的用户(登陆)可以进行读写，否则执行访问get方法
-    # IsOwnerOrReadOnly:自定义的IsOwnerOrReadOnly表示只用创建的用户才能够进行修改
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,)
-
-
-
-
-from rest_framework.decorators import api_view
-from rest_framework.reverse import reverse
-from rest_framework import renderers, generics
-from rest_framework.response import Response
-
-
-@api_view(['GET'])
-def api_root(request, format=None):
-    return Response(
-        {
-            'user': reverse('user-list', request=request, format=format),
-            'snippets': reverse('snippet-list', request=request, format=format) #reverse里面的名字是url中的命名空间
-        }
-    )
-
-
-class SnippetHighlight(generics.GenericAPIView):
-    queryset = Snippet.objects.all()
-    renderer_classes = (renderers.StaticHTMLRenderer,)
-
-    def get(self, request, *args, **kwargs):
-        snippet = self.get_object()
-        return Response(snippet.highlighted)
-
-# from rest_framework import viewsets
 # from snippets.models import Snippet
-# from django.contrib.auth.models import User
 # from snippets.serializers import SnippetSerializer,UserSerializer
-# from rest_framework.decorators import action
-# from rest_framework.response import Response
-# from rest_framework import permissions,renderers
+# from rest_framework import generics
+# from django.contrib.auth.models import User
 # from snippets.permissions import IsOwnerOrReadOnly
+# from rest_framework import permissions
 #
 #
-# class UserViewSet(viewsets.ReadOnlyModelViewSet):
+# class UserList(generics.ListCreateAPIView):
 #     queryset = User.objects.all()
 #     serializer_class = UserSerializer
 #
 #
-# class SnippetViewSet(viewsets.ModelViewSet):
+# class UserDetail(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#
+#
+# class SnippetList(generics.ListCreateAPIView):
 #     queryset = Snippet.objects.all()
 #     serializer_class = SnippetSerializer
-#     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,)
 #
-#     @action(detail=True, renderer_classes=[renderers.StaticHTMLRenderer])
-#     def highlight(self, request, *args, **kwargs):
-#         snippet = self.get_object()
-#         return Response(snippet.highlighted)
-#
+#     #这里表示在snippet中的用户是登录的用户而不是传入的请求用户
 #     def perform_create(self, serializer):
 #         serializer.save(owner=self.request.user)
+#
+#     #IsAuthenticatedOrReadOnly:设置只用经过身份认证的用户(登陆)可以进行读写，否则执行访问get方法
+#     #IsOwnerOrReadOnly:自定义的IsOwnerOrReadOnly表示只用创建的用户才能够进行修改
+#     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,)
+#
+#
+# class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = Snippet.objects.all()
+#     serializer_class = SnippetSerializer
+#
+#     #这里表示在snippet中修改后的用户是登录的用户而不是传入的请求用户
+#     def perform_update(self, serializer):
+#         serializer.save(owner=self.request.user)
+#
+#     # IsAuthenticatedOrReadOnly:设置只用经过身份认证的用户(登陆)可以进行读写，否则执行访问get方法
+#     # IsOwnerOrReadOnly:自定义的IsOwnerOrReadOnly表示只用创建的用户才能够进行修改
+#     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,)
+#
+#
+#
+#
+# from rest_framework.decorators import api_view
+# from rest_framework.reverse import reverse
+# from rest_framework import renderers, generics
+# from rest_framework.response import Response
+#
+#
+# @api_view(['GET'])
+# def api_root(request, format=None):
+#     return Response(
+#         {
+#             'user': reverse('user-list', request=request, format=format),
+#             'snippets': reverse('snippet-list', request=request, format=format) #reverse里面的名字是url中的命名空间
+#         }
+#     )
+#
+#
+# class SnippetHighlight(generics.GenericAPIView):
+#     queryset = Snippet.objects.all()
+#     #这里的渲染器把原本的html原本渲染为页面
+#     renderer_classes = (renderers.StaticHTMLRenderer,)
+#
+#     def get(self, request, *args, **kwargs):
+#         snippet = self.get_object()
+#         return Response(snippet.highlighted)
+
+
+from snippets.models import Snippet
+from rest_framework import viewsets
+from snippets.serializers import SnippetSerializer, UserSerializer
+from django.contrib.auth.models import User
+from snippets.permissions import IsOwnerOrReadOnly
+from rest_framework import permissions,renderers
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+class SnippetViewSet(viewsets.ModelViewSet):
+    queryset = Snippet.objects.all()
+    serializer_class = SnippetSerializer
+    """
+    @action()
+    action装饰器可以接收两个参数：
+    methods: 声明该action对应的请求方式，列表传递
+    detail: 声明该action的路径是否与单一资源对应，及是否是xxx/<pk>/action方法名/
+        True 表示路径格式是xxx/<pk>/action方法名/
+        False 表示路径格式是xxx/action方法名/
+    """
+
+    @action(detail=True, permission_classes=(permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,),
+            renderer_classes=[renderers.StaticHTMLRenderer])
+    def highlight(self, request, *args, **kwargs):
+        snippet = self.get_object()
+        return Response(snippet.highlighted)
+
+        #设置为false时使用
+        #return Response({'status': False, 'code': 3001, 'data': {}, 'message': 'eclipse 文件不存在,请联系平台人员!'})
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
 
 
 from restful.tasks import add
